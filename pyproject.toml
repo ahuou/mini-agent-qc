@@ -11,6 +11,10 @@ dependencies = [
     "pydantic>=2.0",
     # anthropic is only needed for live mode; mock mode runs without it.
     "anthropic>=0.40",
+    # Web dashboard (Vercel's uv builder installs from this list):
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
