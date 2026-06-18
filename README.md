@@ -6,6 +6,18 @@ defect-threshold rules, raises a (stubbed) **e-mail alert** when a facility brea
 limit, and — the part that matters most — **measures how well the tool itself reads,
 classifies, and decides**, in language a non-technical operations reader can act on.
 
+**▶ Live demo:** **https://mini-agent-qc.vercel.app** — open it and the offline analysis runs on load (free, no setup). Or run it locally (below).
+
+### What this demonstrates (mapped to the brief)
+
+| What you're looking for | Where to see it |
+|---|---|
+| Explore & understand unfamiliar data | the inspection-report schema and the free-text extraction problem (`qc_pipeline/loader.py`; step 2 below) |
+| Data extraction with modern techniques | LLM **structured-output** extraction, robust to unseen phrasing (`qc_pipeline/extraction/llm_extractor.py`) |
+| Clean, readable, testable code | one pluggable `Extractor` interface, a pure (I/O-free) rules engine, **86 tests** (`tests/`) |
+| Explainability to non-technical audiences | the plain-language tool-quality summary (below) + `report/main.pdf` §3 |
+| Logical problem-solving | the "13 hundred" → why-an-LLM → cross-check → measure-the-tool arc (`report/main.pdf` §4) |
+
 > The full write-up (design, the natural-language extraction problem, and the
 > tool-quality metrics explained for a non-technical audience) is in
 > **`report/main.pdf`**. This README is just how to run it.
@@ -13,7 +25,7 @@ classifies, and decides**, in language a non-technical operations reader can act
 ## Quickstart (offline, no API key, $0)
 
 ```bash
-pip install -r requirements.txt        # pydantic (+ pytest); anthropic only for live mode
+pip install -r requirements.txt        # pydantic (pipeline) · fastapi/uvicorn (dashboard) · anthropic (live)
 python -m qc_pipeline --mode mock      # deterministic offline run
 python -m pytest -q                    # full test suite
 ```
