@@ -8,6 +8,10 @@
 \usepackage{tabularx}
 \usepackage{titlesec}
 \usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\graphicspath{{figs/}}
 
 \definecolor{accent}{HTML}{1F4E79}
 \definecolor{soft}{HTML}{F4F1EA}
@@ -186,10 +190,58 @@ is built to generalise and was then \emph{adversarially stress-tested}:
   \item \textbf{Runs anywhere, \$0.} \code{python -m qc\_pipeline --mode mock} needs only
     \code{pydantic}; the Anthropic SDK is imported lazily and only for live mode.
   \item \textbf{Optional operator console.} A small FastAPI dashboard (\code{webapp/}) wraps
-    the pipeline --- mock/live runs, drag-and-drop reports, a raw-report viewer, and a
-    content-hash extraction cache that avoids re-spending tokens on unchanged reports. The
-    CLI and test suite are the deliverable; the console is additive.
+    the pipeline for non-technical users --- mock/live runs, an e-mail outbox, a raw-report
+    viewer, and a content-hash cache that avoids re-spending tokens on unchanged reports
+    (\S\ref{sec:console}). The CLI and test suite are the deliverable; the console is additive.
 \end{itemize}
+
+\section{The operator console (web app)}\label{sec:console}
+The deliverable is the CLI and test suite; layered on top is a small FastAPI dashboard
+(\code{webapp/}, also deployed live\footnote{\href{https://mini-agent-qc.vercel.app}{\nolinkurl{mini-agent-qc.vercel.app}} --- the offline analysis runs on load at \$0; live extraction is optional and runs on a budgeted demo key or your own.})
+that lets a non-technical operator \emph{watch} the pipeline work: run it in mock or live mode,
+see every tool-quality metric update, drag in new reports, and --- the two views below --- track what
+the tool would send and inspect exactly what tripped an alert.
+
+\paragraph{E-mail outbox.} The stubbed \code{send\_email()} (\code{alerting.py}) surfaces as a
+tracker (Fig.~\ref{fig:outbox}): each breach becomes a \textsc{sent} alert and each review-flagged
+report a \textsc{draft}, every one openable to read the exact rendered message (Fig.~\ref{fig:email}).
+The body is an editable template, so an operator can tune the wording without touching code. Nothing is
+actually e-mailed --- the stub logs the message --- and the panel says so explicitly, so the demo can
+never be mistaken for live sending.
+
+\paragraph{Report viewer.} Clicking an alert (or any ledger row) opens the underlying inspection JSON
+with the decision-relevant fields highlighted (Fig.~\ref{fig:viewer}): the production total and the two
+free-text notes. For \code{NA-CHI-021} the highlighted minor note --- \emph{``13 hundred units\dots''}
+--- is the whole story: the tool read 1{,}300, the naive cross-check read 13, and the panel surfaces
+both so a human can confirm in seconds. A file that fails to parse opens the same way with the offending
+field flagged, making the ``coverage gap, not a crash'' behaviour visible rather than buried in a log.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{console_outbox.png}
+\caption{The outbox turns the \code{send\_email()} stub into something a manager can see: the one breach
+(NA-CHI-021) is a \textsc{sent} alert; the two reports the readers disagreed on are \textsc{draft} review
+requests. Nothing leaves the machine.}
+\label{fig:outbox}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.55\linewidth}
+  \centering\includegraphics[width=\linewidth]{console_email.png}
+  \caption{The rendered alert e-mail: a plain-language ``why'', the reading, and the quoted evidence
+  ``13 hundred''. The header marks it a logged stub, not a sent message.}
+  \label{fig:email}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.42\linewidth}
+  \centering\includegraphics[width=\linewidth]{console_viewer_notes.png}
+  \caption{The raw-JSON viewer with the total and the two audit notes highlighted --- the minor note
+  ``13 hundred units\dots'' is what drives the breach.}
+  \label{fig:viewer}
+\end{subfigure}
+\caption{Click an alert to see what the tool would send (left) and what tripped it (right).}
+\label{fig:emailviewer}
+\end{figure}
 
 \section{Limitations \& future work}
 The offline parser is a faithful but bounded stand-in for the model: it reads the first
