@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SENTINEL · QC Agent Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1014; --bg2:#0e151b; --panel:#121b22; --panel2:#16212a;
+    --line:#22323d; --line2:#2c4150;
+    --ink:#e8f0f3; --muted:#8aa0ad; --dim:#5d7280;
+    --amber:#ffb000; --amber-dim:#a87600;
+    --red:#ff5a47; --red-glow:#ff5a4733;
+    --green:#39d98a; --green-glow:#39d98a22;
+    --cyan:#46cfe0;
+    --shadow:0 18px 40px -18px #000c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 78% -8%, #16242e 0%, transparent 55%),
+      radial-gradient(900px 500px at 0% 110%, #11202a 0%, transparent 50%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Chakra Petch",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    position:relative;
+    overflow-x:hidden;
+  }
+  /* faint engineering grid + grain */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(#ffffff06 1px,transparent 1px),
+      linear-gradient(90deg,#ffffff06 1px,transparent 1px);
+    background-size:46px 46px;
+    mask-image:radial-gradient(120% 100% at 50% 0%,#000 40%,transparent 100%);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:22px 26px 60px}
+
+  /* ---- top bar ---- */
+  header{display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+    padding:16px 20px;border:1px solid var(--line);border-radius:14px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:var(--shadow)}
+  .brand{display:flex;align-items:center;gap:14px;min-width:0}
+  .glyph{width:40px;height:40px;flex:none;border:1.5px solid var(--amber);border-radius:9px;
+    display:grid;place-items:center;color:var(--amber);position:relative;
+    box-shadow:0 0 18px -4px var(--amber-dim) inset, 0 0 14px -6px var(--amber-dim)}
+  .glyph svg{width:22px;height:22px}
+  .title h1{font-size:19px;font-weight:700;letter-spacing:.22em;margin:0;text-transform:uppercase}
+  .title p{margin:1px 0 0;font-size:11.5px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+  .spacer{flex:1}
+
+  .controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .seg{display:flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;background:#0c141a}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--muted);
+    font-family:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    padding:8px 14px;cursor:pointer;transition:.18s;font-weight:600}
+  .seg button.on{background:var(--amber);color:#1a1205}
+  .seg button:not(.on):hover{color:var(--ink);background:#13202a}
+  select{appearance:none;background:#0c141a;color:var(--ink);border:1px solid var(--line2);
+    border-radius:9px;padding:8px 30px 8px 12px;font-family:inherit;font-size:12px;
+    letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%238aa0ad' stroke-width='1.5'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 11px center}
+  .run{display:inline-flex;align-items:center;gap:9px;border:0;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+    color:#1a1205;background:linear-gradient(180deg,#ffc23d,var(--amber));
+    padding:10px 20px;border-radius:9px;box-shadow:0 0 22px -6px var(--amber-dim);transition:.15s}
+  .run:hover{filter:brightness(1.07)}
+  .run:active{transform:translateY(1px)}
+  .run[disabled]{opacity:.55;cursor:wait}
+  .run .dot{width:8px;height:8px;border-radius:50%;background:#1a1205}
+  .run.stale{animation:runpulse 1.3s ease-in-out infinite}
+  @keyframes runpulse{0%,100%{box-shadow:0 0 0 0 #ffb00000}50%{box-shadow:0 0 0 5px #ffb00038}}
+  .modelbadge{display:inline-flex;align-items:center;gap:7px;font-family:"IBM Plex Mono",monospace;font-size:11px;
+    letter-spacing:.04em;color:var(--muted);border:1px solid var(--line2);border-radius:20px;padding:6px 11px;white-space:nowrap}
+  .modelbadge i{width:7px;height:7px;border-radius:50%;background:var(--dim);transition:.2s}
+  .modelbadge.live i{background:var(--green);box-shadow:0 0 9px var(--green)}
+  .modelbadge.live{border-color:#1f4a39}
+  .modelbadge b{color:var(--ink);font-weight:600}
+  .keyin{font-family:"IBM Plex Mono",monospace;font-size:12px;background:#0c141a;border:1px solid var(--line2);
+    border-radius:9px;color:var(--ink);padding:8px 12px;width:200px;letter-spacing:.02em}
+  .keyin::placeholder{color:var(--dim)}
+  .keyin:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px #ffb00018}
+  .keyin.need{border-color:var(--amber)}
+
+  /* ---- alert banner ---- */
+  .banner{margin-top:18px;border-radius:14px;border:1px solid var(--line);overflow:hidden;
+    display:flex;align-items:center;gap:20px;padding:20px 24px;position:relative;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:var(--shadow)}
+  .banner .lamp{width:54px;height:54px;border-radius:50%;flex:none;position:relative}
+  .lamp::after{content:"";position:absolute;inset:0;border-radius:50%}
+  .banner.clear{border-color:#1f4a39}
+  .banner.clear .lamp{background:radial-gradient(circle at 38% 34%,#7dffc0,var(--green));
+    box-shadow:0 0 28px 2px var(--green-glow),0 0 0 6px #39d98a14}
+  .banner.alert{border-color:#5a2620;background:linear-gradient(180deg,#1d1311,#160e0d)}
+  .banner.alert .lamp{background:radial-gradient(circle at 38% 34%,#ff9a8c,var(--red));
+    box-shadow:0 0 30px 3px var(--red-glow),0 0 0 6px #ff5a4714;animation:pulse 1.25s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 26px 2px var(--red-glow),0 0 0 5px #ff5a4710}
+    50%{box-shadow:0 0 46px 8px var(--red-glow),0 0 0 12px #ff5a4708}}
+  .banner .btxt{min-width:0}
+  .banner .bstate{font-size:24px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;line-height:1.1}
+  .banner.clear .bstate{color:var(--green)} .banner.alert .bstate{color:var(--red)}
+  .banner .bsub{font-size:13px;color:var(--muted);margin-top:4px;letter-spacing:.04em}
+  .banner .bmeta{margin-left:auto;text-align:right;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--dim);letter-spacing:.02em;white-space:nowrap}
+
+  /* ---- section heading ---- */
+  .sec{display:flex;align-items:center;gap:12px;margin:30px 2px 14px}
+  .sec h2{font-size:13px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin:0}
+  .sec .ln{flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+
+  /* ---- KPI cards ---- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .card{position:relative;border:1px solid var(--line);border-radius:13px;padding:17px 17px 15px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));overflow:hidden;
+    opacity:0;transform:translateY(10px);animation:rise .5s forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .card::before{content:"";position:absolute;top:0;left:14px;right:14px;height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent,#33485a),transparent);opacity:.7}
+  .card .klabel{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
+    display:flex;align-items:center;gap:7px}
+  .card .klabel i{width:6px;height:6px;border-radius:50%;background:var(--accent,#33485a);box-shadow:0 0 8px var(--accent,#33485a)}
+  .card .kval{font-family:"IBM Plex Mono",monospace;font-size:34px;font-weight:600;
+    letter-spacing:-.01em;margin:9px 0 2px;line-height:1;color:var(--ink)}
+  .card .kval small{font-size:15px;color:var(--muted);font-weight:500}
+  .card .ksub{font-size:11.5px;color:var(--muted);letter-spacing:.02em;min-height:30px}
+  .card.good{--accent:var(--green)} .card.warn{--accent:var(--amber)} .card.info{--accent:var(--cyan)}
+  .card .bar{height:4px;border-radius:3px;background:#0c141a;margin-top:8px;overflow:hidden}
+  .card .bar i{display:block;height:100%;background:var(--accent,#33485a);border-radius:3px;
+    box-shadow:0 0 10px -1px var(--accent);width:0;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+
+  /* ---- two-column ---- */
+  .cols{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
+  @media(max-width:980px){.cols{grid-template-columns:1fr}}
+  .panel{border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--panel2),var(--panel));
+    box-shadow:var(--shadow);overflow:hidden}
+  .panel .phead{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .panel .phead h3{margin:0;font-size:12.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase}
+  .panel .phead .tag{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--dim);
+    border:1px solid var(--line2);border-radius:20px;padding:2px 10px;letter-spacing:.06em}
+  .pbody{padding:16px 18px}
+
+  /* dispatch (alert email) */
+  .dispatch{border:1px solid #4a2620;border-radius:11px;background:#160f0e;margin-bottom:12px;overflow:hidden}
+  .dispatch:last-child{margin-bottom:0}
+  .dispatch .dh{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#1c1210;border-bottom:1px solid #3a1f1b}
+  .dispatch .dh .pin{width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red)}
+  .dispatch .dh b{font-size:13px;letter-spacing:.08em;color:#ffd9d2}
+  .dispatch .dh .pct{margin-left:auto;font-family:"IBM Plex Mono",monospace;color:var(--red);font-size:13px;font-weight:600}
+  .dispatch .db{padding:12px 14px;font-size:12.5px;color:var(--muted)}
+  .dispatch .db .line{font-family:"IBM Plex Mono",monospace;color:#e7b6ad;font-size:11.5px;margin:3px 0}
+  .dispatch .ev{margin-top:9px;padding:9px 11px;border-left:2px solid var(--amber);background:#1a130c;
+    font-size:11.5px;color:var(--ink)}
+  .dispatch .ev span{color:var(--amber);font-family:"IBM Plex Mono",monospace}
+  .allclear{padding:26px;text-align:center;color:var(--green);letter-spacing:.1em;font-size:13px}
+
+  /* bench test */
+  .field{margin-bottom:11px}
+  .field label{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+  .field input,.field textarea{width:100%;background:#0b1217;border:1px solid var(--line2);border-radius:9px;
+    color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:12.5px;padding:9px 11px;resize:vertical}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px #ffb00018}
+  .benchgo{width:100%;margin-top:4px;border:0;cursor:pointer;font-family:inherit;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;font-size:12.5px;color:#06231a;
+    background:linear-gradient(180deg,#5ff0ae,var(--green));padding:11px;border-radius:9px;transition:.15s}
+  .benchgo:hover{filter:brightness(1.06)} .benchgo:active{transform:translateY(1px)}
+  .verdict{margin-top:14px;border:1px solid var(--line);border-radius:11px;padding:14px;display:none}
+  .verdict.show{display:block;animation:rise .35s}
+  .verdict .vtop{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .vtag{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:12px;letter-spacing:.1em;
+    padding:4px 11px;border-radius:7px}
+  .vtag.alert{background:var(--red-glow);color:var(--red);border:1px solid #5a2620}
+  .vtag.clear{background:var(--green-glow);color:var(--green);border:1px solid #1f4a39}
+  .vtag.review{background:#ffb00018;color:var(--amber);border:1px solid #4a3514}
+  .readout{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ro{background:#0b1217;border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+  .ro .rl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .ro .rv{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600;margin-top:2px}
+  .ro .conf{font-size:10.5px;color:var(--muted);margin-top:3px;font-family:"IBM Plex Mono",monospace}
+  .vrules{margin-top:11px;font-size:11.5px;color:var(--muted)}
+  .vrules .r{font-family:"IBM Plex Mono",monospace;color:#e7b6ad;margin:2px 0}
+  .vx{margin-top:10px;font-size:11px;color:var(--dim);font-family:"IBM Plex Mono",monospace}
+
+  /* ---- table ---- */
+  .tablewrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead th{text-align:left;padding:12px 14px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--dim);background:#0e161c;border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap}
+  thead th.num,tbody td.num{text-align:right;font-family:"IBM Plex Mono",monospace}
+  tbody td{padding:11px 14px;border-bottom:1px solid #18242c;color:var(--ink)}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr{transition:background .15s}
+  tbody tr:hover{background:#16222b}
+  tbody tr.alert{background:#1c100e}
+  tbody tr.alert:hover{background:#23130f}
+  td .site{font-family:"IBM Plex Mono",monospace;font-weight:600;letter-spacing:.02em}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-family:"IBM Plex Mono",monospace;font-size:11px;
+    padding:3px 9px;border-radius:20px;letter-spacing:.04em;white-space:nowrap}
+  .chip.alert{background:var(--red-glow);color:var(--red)}
+  .chip.clear{background:#23323b;color:var(--muted)}
+  .chip.rev{background:#ffb00016;color:var(--amber)}
+  .chip.cache{background:#0f1f24;color:var(--cyan)}
+  .cacheline{font-size:10.5px;letter-spacing:.05em;color:var(--dim);font-family:"IBM Plex Mono",monospace;margin-top:1px}
+  .cacheline a{color:var(--cyan);cursor:pointer;text-decoration:none}
+  .cacheline a:hover{color:var(--amber);text-decoration:underline}
+  .chip i{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .disagree{color:var(--amber)}
+  .agree{color:var(--dim)}
+
+  footer{margin-top:34px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;
+    font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--dim);letter-spacing:.04em}
+  footer .d{width:5px;height:5px;border-radius:50%;background:var(--line2)}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);z-index:50;
+    background:#2a1411;border:1px solid #5a2620;color:#ffd9d2;padding:12px 18px;border-radius:10px;
+    font-size:12.5px;letter-spacing:.03em;opacity:0;transition:.3s;box-shadow:var(--shadow);max-width:90vw}
+  .toast.show{opacity:1;transform:translateX(-50%)}
+  .muted{color:var(--muted)} .mono{font-family:"IBM Plex Mono",monospace}
+  .skl{color:var(--dim)}
+
+  /* ---- data source / upload ---- */
+  .datasrc{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:stretch}
+  @media(max-width:860px){.datasrc{grid-template-columns:1fr}}
+  .dropzone{border:1.5px dashed var(--line2);border-radius:13px;cursor:pointer;transition:.18s;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));padding:22px;text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:var(--muted)}
+  .dropzone:hover,.dropzone.drag{border-color:var(--amber);background:#15212a;color:var(--ink);
+    box-shadow:0 0 26px -10px var(--amber-dim) inset}
+  .dropzone .dz-ic{width:28px;height:28px;color:var(--amber)}
+  .dropzone b{color:var(--ink);font-size:13.5px;letter-spacing:.03em;font-weight:600}
+  .dropzone small{font-size:11px;color:var(--dim);font-family:"IBM Plex Mono",monospace}
+  .dsmeta{border:1px solid var(--line);border-radius:13px;padding:15px 16px;display:flex;flex-direction:column;gap:11px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel))}
+  .dsmeta .dstat{font-family:"IBM Plex Mono",monospace;font-size:13.5px;color:var(--ink)}
+  .dsmeta .dstat b{color:var(--amber)}
+  .switch{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);user-select:none}
+  .switch input{display:none}
+  .switch .tr{width:34px;height:18px;border-radius:20px;background:#0c141a;border:1px solid var(--line2);
+    position:relative;transition:.18s;flex:none}
+  .switch .tr::after{content:"";position:absolute;top:1px;left:1px;width:14px;height:14px;border-radius:50%;
+    background:var(--dim);transition:.18s}
+  .switch input:checked + .tr{background:#3a2c0c;border-color:var(--amber-dim)}
+  .switch input:checked + .tr::after{left:17px;background:var(--amber)}
+  .filechips{display:flex;flex-wrap:wrap;gap:7px}
+  .fchip{display:inline-flex;align-items:center;gap:8px;font-family:"IBM Plex Mono",monospace;font-size:11px;
+    background:#13202a;border:1px solid var(--line2);border-radius:7px;padding:4px 9px;color:var(--ink)}
+  .fchip.bad{border-color:#5a2620;color:#e7b6ad}
+  .fchip x{cursor:pointer;color:var(--dim);font-style:normal;font-size:12px}
+  .fchip x:hover{color:var(--red)}
+  .dsclear{align-self:flex-start;background:none;border:0;color:var(--dim);font-family:inherit;font-size:10.5px;
+    letter-spacing:.12em;text-transform:uppercase;cursor:pointer;padding:0}
+  .dsclear:hover{color:var(--red)}
+
+  /* ---- report viewer modal ---- */
+  tbody tr{cursor:pointer}
+  .dispatch{cursor:pointer}
+  .dispatch:hover{border-color:#a8463a}
+  td .view{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  tbody tr:hover td .view{color:var(--amber)}
+  .modal{position:fixed;inset:0;z-index:60;display:none;align-items:flex-start;justify-content:center;
+    background:#06090cdd;backdrop-filter:blur(3px);padding:42px 18px;overflow:auto}
+  .modal.show{display:flex}
+  .sheet{width:min(820px,100%);background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line2);border-radius:14px;box-shadow:0 30px 80px -20px #000;overflow:hidden;animation:rise .3s}
+  .sheet .sh{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .sheet .sh h3{margin:0;font-size:13.5px;letter-spacing:.05em;font-family:"IBM Plex Mono",monospace;color:var(--ink)}
+  .sheet .sh .x{margin-left:auto;cursor:pointer;color:var(--muted);border:1px solid var(--line2);border-radius:8px;
+    width:30px;height:30px;display:grid;place-items:center;font-size:15px;transition:.15s}
+  .sheet .sh .x:hover{color:var(--red);border-color:#5a2620}
+  .sheet .sb{padding:16px 18px}
+  .callout{border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;border:1px solid var(--line);color:var(--muted)}
+  .callout.alert{background:#1a100e;border-color:#5a2620}
+  .callout.err{background:#1a130c;border-color:#5a2620}
+  .callout.ok{background:#0f1a16;border-color:#1f4a39}
+  .callout .ct{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.04em;color:var(--ink);margin-bottom:6px}
+  .callout.alert .ct{color:var(--red)} .callout.err .ct{color:var(--amber)} .callout.ok .ct{color:var(--green)}
+  .callout .r{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#e7b6ad;margin-top:3px}
+  .jsonbox{background:#0a0f13;border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;
+    max-height:48vh;font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.65;white-space:pre;color:#a9c2cf}
+  .jsonbox .hl{background:#ffb00026;color:#ffd98a;border-radius:3px}
+  .jsonbox .hlbad{background:#ff5a4733;color:#ffc2b8;border-radius:3px}
+
+  /* ---- outbox ---- */
+  .mailitem{display:flex;align-items:center;gap:12px;padding:10px 13px;border:1px solid var(--line);
+    border-radius:10px;margin-bottom:8px;cursor:pointer;background:#0f1820;transition:.15s}
+  .mailitem:last-child{margin-bottom:0}
+  .mailitem:hover{border-color:var(--line2);background:#13202a}
+  .mailitem .mtag{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;
+    padding:3px 9px;border-radius:6px;flex:none}
+  .mailitem .mtag.sent{background:var(--red-glow);color:var(--red)}
+  .mailitem .mtag.draft{background:#ffb00016;color:var(--amber)}
+  .mailitem .msub{font-size:12.5px;color:var(--ink);font-family:"IBM Plex Mono",monospace;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mailitem .mto{margin-left:auto;font-size:10.5px;color:var(--dim);font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+  .outboxempty{padding:20px;text-align:center;color:var(--green);font-size:12.5px;letter-spacing:.04em}
+  #tplEditor textarea{font-family:"IBM Plex Mono",monospace;font-size:11.5px}
+  .tpllegend{font-size:10.5px;color:var(--dim);font-family:"IBM Plex Mono",monospace;margin:6px 0 10px;line-height:1.7}
+  .tpllegend code{color:var(--cyan);background:#0f1f24;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="glyph" title="Sentinel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5z"/><path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div class="title">
+        <h1>Sentinel</h1>
+        <p>Quality-Control Agent · Ops Console</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="controls">
+      <span class="modelbadge mock" id="modelBadge" title="The model that served the latest run (reported by the API)"><i></i>model&nbsp;<b id="modelName">—</b></span>
+      <div class="seg" id="modeSeg">
+        <button data-mode="mock" class="on">Mock</button>
+        <button data-mode="live">Live</button>
+      </div>
+      <select id="tier" title="Model tier">
+        <option value="cheap">Haiku · cheap</option>
+        <option value="balanced" selected>Sonnet · balanced</option>
+        <option value="max">Opus · max</option>
+      </select>
+      <input type="password" id="apiKey" class="keyin" placeholder="sk-ant-…  (live key)" autocomplete="off" spellcheck="false" style="display:none">
+      <button class="run" id="runBtn"><span class="dot"></span><span id="runLabel">Run analysis</span></button>
+    </div>
+  </header>
+
+  <!-- ALERT BANNER -->
+  <div class="banner clear" id="banner">
+    <div class="lamp"></div>
+    <div class="btxt">
+      <div class="bstate" id="bState">Standing by</div>
+      <div class="bsub" id="bSub">Initializing console…</div>
+    </div>
+    <div class="bmeta" id="bMeta"></div>
+  </div>
+
+  <!-- DATA SOURCE -->
+  <div class="sec"><h2>Data source</h2><div class="ln"></div></div>
+  <div class="datasrc">
+    <div class="dropzone" id="dropzone">
+      <svg class="dz-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      <b>Drop inspection-report .json files here</b>
+      <small>or click to choose — they're processed and every stat updates</small>
+      <input type="file" id="fileInput" accept=".json,application/json" multiple hidden>
+    </div>
+    <div class="dsmeta">
+      <div class="dstat" id="dsStat">Dataset: <b>12</b> reports</div>
+      <label class="switch"><input type="checkbox" id="incSample" checked><span class="tr"></span>Include sample&nbsp;(12)</label>
+      <div class="filechips" id="fileChips"></div>
+      <button class="dsclear" id="dsClear" style="display:none">clear uploads</button>
+      <div class="cacheline" id="cacheLine"></div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="sec"><h2>Tool reliability</h2><div class="ln"></div><span class="mono skl" id="runStamp"></span></div>
+  <div class="kpis" id="kpis"></div>
+
+  <!-- DISPATCH + BENCH -->
+  <div class="cols" style="margin-top:24px">
+    <div class="panel">
+      <div class="phead"><h3>Alert dispatch</h3><span class="tag" id="dispatchTag">—</span></div>
+      <div class="pbody" id="dispatch"><div class="skl mono" style="padding:14px">awaiting run…</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="phead"><h3>Bench test · read any note</h3><span class="tag">live parser</span></div>
+      <div class="pbody">
+        <div class="field">
+          <label>Total units produced</label>
+          <input id="bTotal" value="6100" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>Major-defect note</label>
+          <textarea id="bMajor" rows="2">No critical failures verified.</textarea>
+        </div>
+        <div class="field">
+          <label>Minor-defect note</label>
+          <textarea id="bMinor" rows="2">13 hundred units exhibited slight connector misalignment.</textarea>
+        </div>
+        <button class="benchgo" id="benchBtn">Read &amp; evaluate</button>
+        <div class="verdict" id="verdict"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTBOX -->
+  <div class="sec"><h2>Outbox</h2><div class="ln"></div><span class="mono skl" id="outboxMeta"></span></div>
+  <div class="panel">
+    <div class="phead"><h3>Stakeholder notifications</h3><span class="tag" id="tplToggle" style="cursor:pointer">edit template ▸</span></div>
+    <div class="pbody">
+      <div id="tplEditor" style="display:none">
+        <div class="field">
+          <label>Email body template</label>
+          <textarea id="tplBody" rows="9"></textarea>
+        </div>
+        <div class="tpllegend">placeholders:
+          <code>{site}</code> <code>{headline}</code> <code>{reasons}</code> <code>{total}</code>
+          <code>{major}</code> <code>{minor}</code> <code>{major_pct}</code> <code>{minor_pct}</code>
+          <code>{overall_pct}</code> <code>{evidence}</code> <code>{recipients}</code></div>
+        <div style="display:flex;gap:10px;margin-bottom:14px">
+          <button class="benchgo" id="tplSave" style="width:auto;padding:9px 16px">Save template</button>
+          <button class="dsclear" id="tplReset" style="align-self:center">reset to default</button>
+        </div>
+      </div>
+      <div id="outboxList"></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="sec"><h2>Per-report ledger</h2><div class="ln"></div></div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th>Facility</th><th class="num">Units</th><th class="num">Major</th><th class="num">Minor</th>
+        <th class="num">Confidence</th><th>Cross-check</th><th>Status</th>
+      </tr></thead>
+      <tbody id="rows"><tr><td colspan="7" class="skl mono" style="padding:18px">awaiting run…</td></tr></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <span id="fMode">MODE —</span><span class="d"></span>
+    <span id="fModel">MODEL —</span><span class="d"></span>
+    <span id="fCount">— reports</span><span class="d"></span>
+    <span>metrics grade the agent, not the factory</span>
+  </footer>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <div class="sh"><h3 id="mTitle">report</h3><div class="x" id="mClose" title="close (Esc)">✕</div></div>
+    <div class="sb"><div id="mCallout"></div><div class="jsonbox" id="mJson">loading…</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let MODE = "mock", TIER = "balanced", LAST_M = null, staged = false;
+
+const fmtPct = x => (x==null?"—":(Math.round(x*1000)/10).toFixed(x*100%1===0?0:1)+"%");
+const esc = s => (s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),4200);}
+
+/* ---- mode / tier controls ---- */
+let STATUS={anthropic_installed:true, env_key:false};
+fetch("/api/status").then(r=>r.json()).then(s=>{STATUS=s;updateKeyVis();}).catch(()=>{});
+const apiKey=()=>$("#apiKey").value.trim();
+function updateKeyVis(){
+  const live=MODE==="live";
+  $("#apiKey").style.display=live?"":"none";
+  const need = live && !STATUS.env_key && !apiKey();
+  $("#apiKey").classList.toggle("need", need);
+  if(!live) return;
+  if(need) $("#apiKey").placeholder = STATUS.anthropic_installed===false
+      ? "live needs: pip install anthropic" : "sk-ant-…  key required for live";
+  else if(STATUS.env_key) $("#apiKey").placeholder = "sk-ant-…  optional · overrides the demo key";
+}
+$("#modeSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  MODE=b.dataset.mode;
+  [...$("#modeSeg").children].forEach(x=>x.classList.toggle("on",x===b));
+  updateKeyVis();
+});
+$("#tier").addEventListener("change",e=>TIER=e.target.value);
+$("#apiKey").addEventListener("input",updateKeyVis);
+$("#runBtn").addEventListener("click",runAnalysis);
+$("#benchBtn").addEventListener("click",bench);
+
+/* ---- data source: upload reports, re-run on change ---- */
+let uploaded = [];  // {name, content, ok}
+const dz = $("#dropzone"), fi = $("#fileInput");
+dz.addEventListener("click",()=>fi.click());
+fi.addEventListener("change",e=>{addFiles(e.target.files);fi.value="";});
+["dragover","dragenter"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag");}));
+["dragleave","dragend"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag");}));
+dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");addFiles(e.dataTransfer.files);});
+$("#incSample").addEventListener("change",markStale);
+$("#dsClear").addEventListener("click",()=>{uploaded=[];markStale();});
+
+// Changing the dataset STAGES it — it does not auto-run (a live run costs money).
+// The user presses "Run analysis" to apply.
+function markStale(){ staged=true; $("#runBtn").classList.add("stale"); renderDataset(); }
+
+function refreshCache(){
+  fetch("/api/cache").then(r=>r.json()).then(s=>{
+    const n=s.entries||0;
+    $("#cacheLine").innerHTML = n
+      ? `cache: ${n} saved ${n===1?"analysis":"analyses"} · <a id="cacheClear">clear</a>`
+      : `cache: empty`;
+    const c=$("#cacheClear"); if(c) c.onclick=clearCache;
+  }).catch(()=>{});
+}
+function clearCache(){
+  fetch("/api/cache/clear",{method:"POST"}).then(r=>r.json())
+    .then(d=>{toast(`cleared ${d.cleared} cached analysis(es)`);refreshCache();}).catch(()=>{});
+}
+
+/* ---- outbox: stakeholder notifications (sent alerts + review drafts) ---- */
+const RECIPIENTS = "quality-ops@example.com";
+const DEFAULT_TPL =
+`Facility {site} {headline}.
+
+Why:
+{reasons}
+
+Reading of this run:
+  Total units produced : {total}
+  Major defects        : {major}  ({major_pct})
+  Minor defects        : {minor}  ({minor_pct})
+  Overall defects      : {overall_pct}
+
+Source audit-note evidence: "{evidence}"
+
+— Automated Quality-Control Pipeline`;
+let MAILS = [];
+const emailTemplate = () => localStorage.getItem("qc_email_template") || DEFAULT_TPL;
+
+function composeEmail(r, kind){
+  const tot = r.total_products || 0;
+  const pctf = x => tot>0 ? fmtPct(x) : "n/a";
+  const ph = {
+    site: r.site_code, total: tot.toLocaleString(), major: r.major, minor: r.minor,
+    major_pct: pctf(r.major/tot), minor_pct: pctf(r.minor/tot), overall_pct: pctf((r.major+r.minor)/tot),
+    reasons: ((kind==="sent" ? r.alert_reasons : r.review_reasons) || []).map(x=>"  - "+x).join("\n") || "  - (none)",
+    evidence: (r.minor>=r.major ? r.minor_evidence : r.major_evidence) || "",
+    recipients: RECIPIENTS,
+    headline: kind==="sent"
+      ? "breached a quality threshold and needs attention"
+      : "was flagged for review — please confirm the reading before acting",
+  };
+  const body = emailTemplate().replace(/\{(\w+)\}/g, (m,k)=> k in ph ? String(ph[k]) : m);
+  const subject = kind==="sent"
+    ? `[QC ALERT] ${r.site_code}: defect threshold exceeded`
+    : `[QC REVIEW] ${r.site_code}: please confirm reading`;
+  return { site:r.site_code, kind, to:RECIPIENTS, subject, body };
+}
+
+function renderOutbox(){
+  const rows = (LAST_M && LAST_M.per_report) || [];
+  const sent = rows.filter(r=>r.alert && !r.error).map(r=>composeEmail(r,"sent"));
+  const drafts = rows.filter(r=>r.needs_review && !r.alert && !r.error).map(r=>composeEmail(r,"draft"));
+  MAILS = sent.concat(drafts);
+  $("#outboxMeta").textContent = `${sent.length} sent · ${drafts.length} draft${drafts.length===1?"":"s"}`;
+  if(!MAILS.length){
+    $("#outboxList").innerHTML = `<div class="outboxempty">✓ No notifications — every facility is within limits and confidently read.</div>`;
+    return;
+  }
+  $("#outboxList").innerHTML = MAILS.map((e,i)=>
+    `<div class="mailitem" data-i="${i}"><span class="mtag ${e.kind}">${e.kind.toUpperCase()}</span>`
+    + `<span class="msub">${esc(e.subject)}</span><span class="mto">to ${esc(e.to)} ▸</span></div>`).join("");
+  $("#outboxList").querySelectorAll(".mailitem").forEach(el=>el.onclick=()=>openEmail(MAILS[+el.dataset.i]));
+}
+
+function openEmail(e){
+  $("#mTitle").textContent = e.subject;
+  $("#mCallout").className = "callout " + (e.kind==="sent" ? "alert" : "err");
+  $("#mCallout").innerHTML =
+    `<div class="ct">${e.kind==="sent" ? "✉ SENT — stakeholder alert (stub: logged, not actually e-mailed)"
+                                        : "✎ DRAFT — review request, not auto-sent"}</div>To: ${esc(e.to)}`;
+  $("#mJson").className = "jsonbox";
+  $("#mJson").textContent = e.body;     // textContent: never inject note text as HTML
+  $("#modal").classList.add("show");
+}
+
+$("#tplToggle").addEventListener("click",()=>{
+  const ed=$("#tplEditor"); const open=ed.style.display==="none";
+  ed.style.display = open ? "" : "none";
+  $("#tplToggle").textContent = open ? "hide template ▾" : "edit template ▸";
+  if(open) $("#tplBody").value = emailTemplate();
+});
+$("#tplSave").addEventListener("click",()=>{
+  localStorage.setItem("qc_email_template", $("#tplBody").value); toast("template saved"); renderOutbox();
+});
+$("#tplReset").addEventListener("click",()=>{
+  localStorage.removeItem("qc_email_template"); $("#tplBody").value=DEFAULT_TPL; toast("template reset to default"); renderOutbox();
+});
+
+function addFiles(list){
+  const files=[...list].filter(f=>/\.json$/i.test(f.name)||(f.type||"").includes("json"));
+  if(!files.length){toast("Please add .json report files");return;}
+  let pending=files.length;
+  const done=()=>{ if(--pending===0){ markStale(); toast("Report(s) staged — press Run analysis to apply"); } };
+  files.forEach(f=>{
+    const rd=new FileReader();
+    rd.onload=()=>{ try{uploaded.push({name:f.name,content:JSON.parse(rd.result),ok:true});}
+      catch(_){uploaded.push({name:f.name,content:null,ok:false});toast(`${f.name}: not valid JSON`);} done(); };
+    rd.onerror=done;
+    rd.readAsText(f);
+  });
+}
+function reportCount(){
+  let n=$("#incSample").checked?12:0;
+  uploaded.forEach(u=>{if(u.ok)n+=Array.isArray(u.content)?u.content.length:1;});
+  return n;
+}
+function renderDataset(){
+  const inc=$("#incSample").checked, ok=uploaded.filter(u=>u.ok).length, n=reportCount();
+  $("#dsStat").innerHTML=`Dataset: <b>${n}</b> report${n===1?"":"s"}`
+    + (ok?`  ·  ${inc?"12 sample + ":""}${ok} uploaded`:"")
+    + (staged?`  ·  <span style="color:var(--amber)">press “Run analysis” to apply</span>`:"");
+  $("#fileChips").innerHTML=uploaded.map((u,i)=>
+    `<span class="fchip ${u.ok?"":"bad"}" title="${u.ok?"":"invalid JSON"}">${esc(u.name)} <x data-i="${i}">✕</x></span>`).join("");
+  $("#dsClear").style.display=uploaded.length?"block":"none";
+  $("#fileChips").querySelectorAll("x").forEach(x=>x.addEventListener("click",()=>{
+    uploaded.splice(+x.dataset.i,1);markStale();}));
+}
+
+/* ---- KPI rendering ---- */
+function kpi(cls,label,val,sub,bar){
+  return `<div class="card ${cls}" style="animation-delay:${kpi._i*60}ms">
+    <div class="klabel"><i></i>${label}</div>
+    <div class="kval">${val}</div>
+    <div class="ksub">${sub}</div>
+    ${bar!=null?`<div class="bar"><i style="width:${Math.max(2,Math.min(100,bar))}%"></i></div>`:""}
+  </div>`; }
+
+function render(m){
+  LAST_M=m;
+  const eq=m.extraction_quality, aq=m.alert_quality, cr=m.confidence_and_review,
+        perf=m.performance, cost=m.cost, cov=m.coverage, run=m.run;
+  const alerts=aq.predicted_alert_sites||[];
+
+  // banner
+  const banner=$("#banner");
+  if(alerts.length){
+    banner.className="banner alert";
+    $("#bState").textContent=`${alerts.length} facility over limit`;
+    $("#bSub").innerHTML=`Threshold breach detected — <span class="mono">${alerts.map(esc).join(", ")}</span>. Operations notified.`;
+  }else{
+    banner.className="banner clear";
+    $("#bState").textContent="All clear";
+    $("#bSub").textContent="No facility exceeded its defect limits this run.";
+  }
+  $("#bMeta").innerHTML=`${run.n_reports} reports · ${run.mode.toUpperCase()}<br>${esc(run.model||"")}`;
+
+  // KPIs
+  kpi._i=0;
+  const p=eq.primary, b=eq.baseline, ap=aq.primary;
+  const cards=[];
+  if(p){
+    const onlyLabelled = (p.reports_total && run.n_reports > p.reports_total)
+      ? ` (scored on ${p.reports_total} labelled)` : "";
+    cards.push(kpi("good","Reading accuracy",fmtPct(p.field_accuracy),
+      `${p.fields_correct}/${p.fields_total} counts read correctly${onlyLabelled} · avg error ${p.mean_absolute_error}`, p.field_accuracy*100));
+  }else{
+    cards.push(kpi("info","Reading accuracy","n/a","no ground-truth labels for the uploaded data",null));
+  }
+  if(eq.llm_value&&b){
+    const missed=eq.llm_value.baseline_missed_alert_sites||[];
+    cards.push(kpi("warn","Value of the LLM","+"+fmtPct(eq.llm_value.field_accuracy_gain),
+      `rules-only reader: ${fmtPct(b.field_accuracy)}${missed.length?` — would miss ${esc(missed.join(", "))}`:""}`, eq.llm_value.field_accuracy_gain*100*4));
+  }
+  if(ap){
+    cards.push(kpi(ap.fn?"warn":"good","Breach detection",`${ap.tp}/${ap.tp+ap.fn}`,
+      `caught real breaches · precision ${fmtPct(ap.precision)} · recall ${fmtPct(ap.recall)} · ${ap.fp} false alarm(s)`, ap.recall*100));
+  }
+  cards.push(kpi("info","Confidence",fmtPct(cr.mean_confidence),
+    `mean reading confidence · ${cr.fields_below_cutoff} field(s) below review cutoff`, cr.mean_confidence*100));
+  cards.push(kpi(cr.reports_flagged_for_review?"warn":"good","Human review",fmtPct(cr.review_rate),
+    `${cr.reports_flagged_for_review}/${run.n_reports} flagged${cr.flagged_sites&&cr.flagged_sites.length?` · ${esc(cr.flagged_sites.join(", "))}`:""}`, cr.review_rate*100));
+  cards.push(kpi("info","Throughput",`${perf.mean_latency_ms}<small> ms</small>`,
+    `per report${perf.throughput_reports_per_s?` · ~${Math.round(perf.throughput_reports_per_s).toLocaleString()} rpt/s`:""}`,null));
+  if(run.mode==="live"){
+    const hits=cost.cache_hits||0, calls=cost.api_calls||0;
+    const cnote = hits? ` · ${hits} from cache (0 tokens)` : "";
+    cards.push(kpi("info","Cost / report",`$${(cost.per_report_usd||0).toFixed(5)}`,
+      `live ${esc(run.model)} · ${calls} new API call${calls===1?"":"s"}${cnote}`,null));
+  }else{
+    const e=cost.estimated_per_report_usd||0;
+    cards.push(kpi("info","Cost / report",`~$${e.toFixed(5)}`,
+      `projected at ${esc(cost.estimated_model||"selected tier")} rates · mock made 0 calls ($0 actual)`,null));
+  }
+  cards.push(kpi(cov.coverage_rate<1?"warn":"good","Coverage",fmtPct(cov.coverage_rate),
+    `${cov.reports_extracted}/${cov.files_seen} files read without error${cov.extraction_errors?` · ${cov.extraction_errors} unread`:""}`, cov.coverage_rate*100));
+  cards.forEach(()=>{}); $("#kpis").innerHTML=cards.map(c=>{kpi._i++;return c;}).join("");
+  // animate bars after paint
+  requestAnimationFrame(()=>$("#kpis").querySelectorAll(".bar i").forEach(el=>{const w=el.style.width;el.style.width="0";requestAnimationFrame(()=>el.style.width=w);}));
+
+  // dispatch
+  const rowsByCode={}; (m.per_report||[]).forEach(r=>rowsByCode[r.site_code]=r);
+  const disp=$("#dispatch");
+  if(alerts.length){
+    $("#dispatchTag").textContent=`${alerts.length} active`;
+    disp.innerHTML=alerts.map(code=>{
+      const r=rowsByCode[code]||{}; const reasons=r.alert_reasons||[];
+      const ev = r.minor>=r.major ? r.minor_evidence : r.major_evidence;
+      return `<div class="dispatch" data-site="${esc(code)}" data-source="${esc(r.source||'')}">
+        <div class="dh"><span class="pin"></span><b>${esc(code)}</b>
+          <span class="pct">${fmtPct((r.major+r.minor)/r.total_products)}</span></div>
+        <div class="db">
+          ${reasons.map(x=>`<div class="line">▸ ${esc(x)}</div>`).join("")}
+          <div class="ev">evidence: “<span>${esc(ev||"")}</span>”</div>
+          <div class="line" style="color:var(--dim);margin-top:7px">▸ click to inspect the report json</div>
+        </div></div>`;
+    }).join("");
+  }else{
+    $("#dispatchTag").textContent="0 active";
+    disp.innerHTML=`<div class="allclear">✓ No alerts dispatched — all facilities within limits.</div>`;
+  }
+
+  // table — per-report rows plus any files that failed to parse, all clickable
+  const prRows=(m.per_report||[]).map(r=>{
+    const conf=Math.min(r.major_confidence,r.minor_confidence);
+    const xcheck = r.error ? `<span class="disagree">read failed</span>`
+      : r.baseline_agrees ? `<span class="agree">agrees</span>`
+      : `<span class="disagree">≠ ${r.baseline_major}/${r.baseline_minor}</span>`;
+    let status = r.error ? `<span class="chip rev"><i></i>UNREAD</span>`
+      : r.alert ? `<span class="chip alert"><i></i>ALERT</span>`
+      : `<span class="chip clear"><i></i>clear</span>`;
+    if(r.needs_review && !r.error) status+=` <span class="chip rev"><i></i>review</span>`;
+    if(r.cached) status+=` <span class="chip cache"><i></i>cached</span>`;
+    return `<tr class="${r.alert?'alert':''}" data-site="${esc(r.site_code)}" data-source="${esc(r.source||'')}">
+      <td><span class="site">${esc(r.site_code)}</span></td>
+      <td class="num">${(r.total_products||0).toLocaleString()}</td>
+      <td class="num">${r.major}</td><td class="num">${r.minor}</td>
+      <td class="num">${fmtPct(conf)}</td>
+      <td>${xcheck}</td><td>${status} <span class="view">view ▸</span></td></tr>`;
+  });
+  const peRows=(m.parse_errors||[]).map(p=>
+    `<tr data-source="${esc(p.file)}" data-err="${esc(p.error)}">
+      <td><span class="site">${esc(p.file)}</span></td>
+      <td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>
+      <td><span class="disagree">parse error</span></td>
+      <td><span class="chip rev"><i></i>UNREAD</span> <span class="view">view ▸</span></td></tr>`);
+  $("#rows").innerHTML=prRows.concat(peRows).join("")
+    || `<tr><td colspan="7" class="skl mono" style="padding:18px">no reports</td></tr>`;
+
+  // footer + stamp
+  $("#fMode").textContent="MODE "+run.mode.toUpperCase();
+  $("#fModel").textContent="MODEL "+(run.model||"—");
+  $("#fCount").textContent=run.n_reports+" reports";
+  $("#runStamp").textContent=(run.timestamp||"").replace("T"," ").slice(0,19)+" UTC";
+  // model badge — proves which model actually ran (mock vs the live tier)
+  $("#modelName").textContent=run.model;
+  $("#modelBadge").className="modelbadge "+(run.mode==="live"?"live":"mock");
+  renderOutbox();   // sent alerts + review drafts, from this run's reports
+}
+
+async function runAnalysis(){
+  if(MODE==="live" && !STATUS.env_key && !apiKey()){
+    toast("Enter your Anthropic API key for live mode"); updateKeyVis(); $("#apiKey").focus(); return;
+  }
+  const btn=$("#runBtn"); btn.disabled=true;
+  $("#runLabel").textContent = MODE==="live" ? "Calling model…" : "Running…";
+  const ctrl=new AbortController(); const tmo=setTimeout(()=>ctrl.abort(),120000);
+  try{
+    const res=await fetch("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},signal:ctrl.signal,
+      body:JSON.stringify({mode:MODE,tier:TIER,include_sample:$("#incSample").checked,
+        reports:uploaded.filter(u=>u.ok).map(u=>({name:u.name,content:u.content})),
+        api_key: MODE==="live"?apiKey():undefined})});
+    const data=await res.json();
+    if(!res.ok||data.error){toast("Run failed: "+(data.error||res.status));return;}
+    render(data);
+    staged=false; $("#runBtn").classList.remove("stale"); renderDataset();  // dataset now matches results
+    refreshCache();  // a live run may have added cache entries
+    const cov=data.coverage;
+    if(MODE==="live" && cov.extraction_errors>0)
+      toast(`${cov.extraction_errors} live call(s) failed — check your API key / credits.`);
+  }catch(e){
+    toast(e.name==="AbortError"
+      ? "Live run exceeded 120s in the browser — try a cheaper tier or fewer reports."
+      : "Network error: "+e.message);
+  }
+  finally{clearTimeout(tmo);btn.disabled=false;$("#runLabel").textContent="Run analysis";}
+}
+
+async function bench(){
+  if(MODE==="live" && !STATUS.env_key && !apiKey()){
+    toast("Enter your Anthropic API key for live mode"); updateKeyVis(); $("#apiKey").focus(); return;
+  }
+  const btn=$("#benchBtn"); btn.disabled=true; const old=btn.textContent; btn.textContent="Reading…";
+  const ctrl=new AbortController(); const tmo=setTimeout(()=>ctrl.abort(),60000);
+  try{
+    const res=await fetch("/api/extract",{method:"POST",headers:{"Content-Type":"application/json"},signal:ctrl.signal,
+      body:JSON.stringify({mode:MODE,tier:TIER,total_products:+$("#bTotal").value||0,
+        major_note:$("#bMajor").value,minor_note:$("#bMinor").value,
+        api_key: MODE==="live"?apiKey():undefined})});
+    const d=await res.json();
+    if(!res.ok||d.error){toast("Bench failed: "+(d.error||res.status));return;}
+    const v=$("#verdict"); v.className="verdict show";
+    const tag = d.alert?`<span class="vtag alert">⚠ ALERT</span>`:`<span class="vtag clear">✓ WITHIN LIMITS</span>`;
+    const rev = d.needs_review?`<span class="vtag review">flag for review</span>`:"";
+    v.innerHTML=`
+      <div class="vtop">${tag}${rev}</div>
+      <div class="readout">
+        <div class="ro"><div class="rl">Major defects</div><div class="rv">${d.major.toLocaleString()}</div>
+          <div class="conf">conf ${fmtPct(d.major_confidence)} · ${fmtPct(d.major_pct)}</div></div>
+        <div class="ro"><div class="rl">Minor defects</div><div class="rv">${d.minor.toLocaleString()}</div>
+          <div class="conf">conf ${fmtPct(d.minor_confidence)} · ${fmtPct(d.minor_pct)}</div></div>
+      </div>
+      ${d.reasons&&d.reasons.length?`<div class="vrules">${d.reasons.map(r=>`<div class="r">▸ ${esc(r)}</div>`).join("")}</div>`:""}
+      <div class="vrules" style="margin-top:9px">evidence — major: “<span class="mono" style="color:var(--cyan)">${esc(d.major_evidence)}</span>”, minor: “<span class="mono" style="color:var(--cyan)">${esc(d.minor_evidence)}</span>”</div>
+      <div class="vx">naive cross-check reads ${d.baseline_major}/${d.baseline_minor} ${d.baseline_agrees?"· agrees":"· DISAGREES → review"}${d.model?` · ${esc(d.model)}`:""}${d.cost_usd?` · $${d.cost_usd.toFixed(5)}`:""}</div>`;
+  }catch(e){
+    toast(e.name==="AbortError" ? "Live read exceeded 60s — try again or a cheaper tier." : "Network error: "+e.message);
+  }
+  finally{clearTimeout(tmo);btn.disabled=false;btn.textContent=old;}
+}
+
+/* ---- report viewer: click an alert or any row to inspect the raw json ---- */
+const modal=$("#modal");
+const closeModal=()=>modal.classList.remove("show");
+$("#mClose").addEventListener("click",closeModal);
+modal.addEventListener("click",e=>{if(e.target===modal)closeModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+$("#rows").addEventListener("click",e=>{const tr=e.target.closest("tr[data-source]");
+  if(tr&&tr.dataset.source)openViewer(tr.dataset.source,tr.dataset.site,tr.dataset.err);});
+$("#dispatch").addEventListener("click",e=>{const d=e.target.closest(".dispatch");
+  if(d&&d.dataset.source)openViewer(d.dataset.source,d.dataset.site,"");});
+
+async function openViewer(source,site,err){
+  $("#mTitle").textContent = source + (site?`   ·   ${site}`:"");
+  const co=$("#mCallout"), jb=$("#mJson");
+  const row=(LAST_M&&LAST_M.per_report||[]).find(r=> site?r.site_code===site:r.source===source);
+  if(err){
+    co.className="callout err";
+    co.innerHTML=`<div class="ct">⚠ Could not read this file</div>${esc(err)}`
+      +`<div class="r" style="color:var(--dim);margin-top:6px">Counted as a coverage gap — the pipeline keeps going instead of crashing. The offending field is highlighted below.</div>`;
+  }else if(row&&row.alert){
+    co.className="callout alert";
+    co.innerHTML=`<div class="ct">⚠ ALERT — threshold exceeded</div>read major ${row.major}, minor ${row.minor} `
+      +`(confidence ${fmtPct(Math.min(row.major_confidence,row.minor_confidence))})`
+      +(row.alert_reasons||[]).map(x=>`<div class="r">▸ ${esc(x)}</div>`).join("")
+      +(row.needs_review?`<div class="r" style="color:var(--amber)">flagged for review · rules cross-check read ${row.baseline_major}/${row.baseline_minor}</div>`:"");
+  }else if(row){
+    co.className="callout ok";
+    co.innerHTML=`<div class="ct">✓ Within limits</div>read major ${row.major}, minor ${row.minor} `
+      +`(confidence ${fmtPct(Math.min(row.major_confidence,row.minor_confidence))})`
+      +(row.needs_review?`<div class="r" style="color:var(--amber)">flagged for review · rules cross-check read ${row.baseline_major}/${row.baseline_minor}</div>`:"");
+  }else{ co.className="callout"; co.innerHTML=`<div class="ct">Report source</div>`; }
+  jb.textContent="loading…";
+  modal.classList.add("show");
+  try{
+    const res=await fetch("/api/report?name="+encodeURIComponent(source));
+    const d=await res.json();
+    if(!res.ok||d.error){jb.textContent=d.error||("HTTP "+res.status);return;}
+    jb.innerHTML=prettyJson(d.raw,d.parsed_ok,!!err);
+  }catch(e){jb.textContent="error: "+e.message;}
+}
+
+function prettyJson(raw,parsedOk,isErr){
+  let text=raw;
+  if(parsedOk){ try{ text=JSON.stringify(JSON.parse(raw),null,2);}catch(_){}}
+  return esc(text).split("\n").map(ln=>{
+    if(/total_products/.test(ln) && isErr) return `<span class="hlbad">${ln}</span>`;
+    if(/defects_comments|audit_notes|total_products/.test(ln)) return `<span class="hl">${ln}</span>`;
+    return ln;
+  }).join("\n");
+}
+
+runAnalysis();          // auto-run on load
+refreshCache();         // show how many analyses are cached
+</script>
+</body>
+</html>

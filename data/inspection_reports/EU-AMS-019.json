@@ -1,0 +1,51 @@
+{
+  "header": {
+    "report_version": "1.2.5",
+    "uuid": "d1c8e5f4-2a6f-4bcb-9c71-8e5e4e1c2b90",
+    "facility_data": {
+      "site_code": "EU-AMS-019",
+      "line_id": "Line-2B",
+      "operator_id": "OP-276"
+    },
+    "timestamps": {
+      "start": "2025-12-19T04:00:00Z",
+      "end": "2025-12-19T12:00:00Z"
+    }
+  },
+  "production_run": {
+    "sku": "SmartThermostat-ST100",
+    "batch_statistics": {
+      "total_products": 7200,
+      "target_yield": 7100,
+      "machine_uptime_percent": 97.0,
+      "energy_consumption_kwh": 1055.2
+    },
+    "environmental_logs": [
+      { "hour": 0, "temp_c": 21.6, "humidity": 50 },
+      { "hour": 2, "temp_c": 21.9, "humidity": 51 },
+      { "hour": 4, "temp_c": 22.1, "humidity": 52 },
+      { "hour": 6, "temp_c": 22.3, "humidity": 51 }
+    ]
+  },
+  "quality_assurance": {
+    "automated_scans": {
+      "optical_pass": 7132,
+      "optical_fail": 68,
+      "logic_gates_check": "Pass"
+    },
+    "human_audit_layer": {
+      "sampling_method": "ISO 2859-1 AQL 1.0",
+      "audit_notes": {
+        "major_defects_comments": "A single unit failed due to sensor calibration drift beyond tolerance.",
+        "minor_defects_comments": "A dozen units had minor cosmetic blemishes.",
+        "supervisor_signoff": "K. van Dijk"
+      }
+    }
+  },
+  "logistics": {
+    "packaging_type": "Bulk Carton (with dividers)",
+    "destination_hub": "EU-Distribution-07",
+    "shipping_priority": 2
+  }
+}
+

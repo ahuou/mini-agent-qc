@@ -1,0 +1,51 @@
+{
+  "header": {
+    "report_version": "1.2.6",
+    "uuid": "7f8b1a04-1d0b-4b7e-8b26-759c3d76b9f1",
+    "facility_data": {
+      "site_code": "APAC-PN-021",
+      "line_id": "Line-1A",
+      "operator_id": "OP-739"
+    },
+    "timestamps": {
+      "start": "2025-12-20T00:00:00Z",
+      "end": "2025-12-20T12:00:00Z"
+    }
+  },
+  "production_run": {
+    "sku": "PowerSupply-PS750",
+    "batch_statistics": {
+      "total_products": 12000,
+      "target_yield": 11850,
+      "machine_uptime_percent": 96.6,
+      "energy_consumption_kwh": 2200.3
+    },
+    "environmental_logs": [
+      { "hour": 0, "temp_c": 25.0, "humidity": 53 },
+      { "hour": 3, "temp_c": 25.3, "humidity": 54 },
+      { "hour": 6, "temp_c": 25.6, "humidity": 55 },
+      { "hour": 9, "temp_c": 25.8, "humidity": 54 }
+    ]
+  },
+  "quality_assurance": {
+    "automated_scans": {
+      "optical_pass": 11806,
+      "optical_fail": 194,
+      "logic_gates_check": "Pass"
+    },
+    "human_audit_layer": {
+      "sampling_method": "ISO 2859-1 AQL 1.0",
+      "audit_notes": {
+        "major_defects_comments": "11 units failed high-voltage isolation tests due to contamination.",
+        "minor_defects_comments": "None",
+        "supervisor_signoff": "P. Chen"
+      }
+    }
+  },
+  "logistics": {
+    "packaging_type": "Foam-In-Place Carton",
+    "destination_hub": "APAC-Assembly-09",
+    "shipping_priority": 2
+  }
+}
+

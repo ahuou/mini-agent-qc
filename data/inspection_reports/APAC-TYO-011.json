@@ -1,0 +1,51 @@
+{
+  "header": {
+    "report_version": "1.3.1",
+    "uuid": "c7f6c932-5ab5-4f5d-9aaf-62642e2d02a9",
+    "facility_data": {
+      "site_code": "APAC-TYO-011",
+      "line_id": "Line-5B",
+      "operator_id": "OP-310"
+    },
+    "timestamps": {
+      "start": "2025-12-19T00:00:00Z",
+      "end": "2025-12-19T08:00:00Z"
+    }
+  },
+  "production_run": {
+    "sku": "BatteryPack-BP500",
+    "batch_statistics": {
+      "total_products": 6500,
+      "target_yield": 6400,
+      "machine_uptime_percent": 96.2,
+      "energy_consumption_kwh": 1205.6
+    },
+    "environmental_logs": [
+      { "hour": 0, "temp_c": 23.1, "humidity": 50 },
+      { "hour": 2, "temp_c": 23.3, "humidity": 51 },
+      { "hour": 4, "temp_c": 23.6, "humidity": 52 },
+      { "hour": 6, "temp_c": 23.7, "humidity": 51 }
+    ]
+  },
+  "quality_assurance": {
+    "automated_scans": {
+      "optical_pass": 6378,
+      "optical_fail": 122,
+      "logic_gates_check": "Pass"
+    },
+    "human_audit_layer": {
+      "sampling_method": "ISO 2859-1 AQL 1.0",
+      "audit_notes": {
+        "major_defects_comments": "0 critical defects found.",
+        "minor_defects_comments": "18 units showed cosmetic scratches on casings.",
+        "supervisor_signoff": "H. Sato"
+      }
+    }
+  },
+  "logistics": {
+    "packaging_type": "Foam-In-Place Carton",
+    "destination_hub": "Port-Yokohama-02",
+    "shipping_priority": 4
+  }
+}
+

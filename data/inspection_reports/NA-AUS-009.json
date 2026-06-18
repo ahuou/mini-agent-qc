@@ -1,0 +1,51 @@
+{
+  "header": {
+    "report_version": "1.2.9",
+    "uuid": "2c8e57df-7a9e-44d7-9c57-55d924dbb6a3",
+    "facility_data": {
+      "site_code": "NA-AUS-009",
+      "line_id": "Line-2D",
+      "operator_id": "OP-589"
+    },
+    "timestamps": {
+      "start": "2025-12-19T08:00:00Z",
+      "end": "2025-12-19T16:00:00Z"
+    }
+  },
+  "production_run": {
+    "sku": "Router-RX900",
+    "batch_statistics": {
+      "total_products": 4200,
+      "target_yield": 4100,
+      "machine_uptime_percent": 97.5,
+      "energy_consumption_kwh": 980.2
+    },
+    "environmental_logs": [
+      { "hour": 0, "temp_c": 24.2, "humidity": 44 },
+      { "hour": 2, "temp_c": 24.5, "humidity": 45 },
+      { "hour": 4, "temp_c": 24.7, "humidity": 46 },
+      { "hour": 6, "temp_c": 24.8, "humidity": 45 }
+    ]
+  },
+  "quality_assurance": {
+    "automated_scans": {
+      "optical_pass": 4088,
+      "optical_fail": 112,
+      "logic_gates_check": "Minor Issues"
+    },
+    "human_audit_layer": {
+      "sampling_method": "ISO 2859-1 AQL 1.5",
+      "audit_notes": {
+        "major_defects_comments": "5 units failed thermal stress tests due to heat sink misalignment.",
+        "minor_defects_comments": "Half a dozen units had loose labels (non-functional).",
+        "supervisor_signoff": "M. Diaz"
+      }
+    }
+  },
+  "logistics": {
+    "packaging_type": "ESD-Safe Bag",
+    "destination_hub": "DC-South-08",
+    "shipping_priority": 5
+  }
+}
+

@@ -1,0 +1,17 @@
+# Core (needed for mock mode + tests):
+pydantic>=2.0
+
+# Live mode only (real Anthropic extraction). Installs fine without an API key;
+# mock mode imports it lazily, so the pipeline runs even if this is absent.
+anthropic>=0.40
+
+# Optional: auto-loads a .env file (the QC_* / ANTHROPIC_API_KEY skeleton).
+# The CLI works without it; you can also just export the vars.
+python-dotenv>=1.0
+
+# Web dashboard (optional — `python -m webapp`):
+fastapi>=0.110
+uvicorn>=0.27
+
+# Dev / test:
+pytest>=7.0

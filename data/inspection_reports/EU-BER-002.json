@@ -1,0 +1,51 @@
+{
+  "header": {
+    "report_version": "1.3.0",
+    "uuid": "e64b2e64-3b7c-4cc3-9c57-3b0a1de7e8a1",
+    "facility_data": {
+      "site_code": "EU-BER-002",
+      "line_id": "Line-7E",
+      "operator_id": "OP-145"
+    },
+    "timestamps": {
+      "start": "2025-12-19T07:00:00Z",
+      "end": "2025-12-19T15:00:00Z"
+    }
+  },
+  "production_run": {
+    "sku": "Wearable-WB20",
+    "batch_statistics": {
+      "total_products": 7800,
+      "target_yield": 7700,
+      "machine_uptime_percent": 95.9,
+      "energy_consumption_kwh": 1102.3
+    },
+    "environmental_logs": [
+      { "hour": 0, "temp_c": 22.0, "humidity": 49 },
+      { "hour": 2, "temp_c": 22.2, "humidity": 50 },
+      { "hour": 4, "temp_c": 22.5, "humidity": 51 },
+      { "hour": 6, "temp_c": 22.7, "humidity": 50 }
+    ]
+  },
+  "quality_assurance": {
+    "automated_scans": {
+      "optical_pass": 7681,
+      "optical_fail": 119,
+      "logic_gates_check": "Pass"
+    },
+    "human_audit_layer": {
+      "sampling_method": "ISO 2859-1 AQL 1.0",
+      "audit_notes": {
+        "major_defects_comments": "No critical failures recorded.",
+        "minor_defects_comments": "31 units had minor discoloration of straps.",
+        "supervisor_signoff": "S. Müller"
+      }
+    }
+  },
+  "logistics": {
+    "packaging_type": "Retail Clamshell",
+    "destination_hub": "EU-Distribution-04",
+    "shipping_priority": 3
+  }
+}
+

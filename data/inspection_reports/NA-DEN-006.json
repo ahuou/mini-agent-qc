@@ -1,0 +1,51 @@
+{
+  "header": {
+    "report_version": "1.2.7",
+    "uuid": "9a2e1b09-3a7c-4c3d-99c9-2f1c3f7bc2de",
+    "facility_data": {
+      "site_code": "NA-DEN-006",
+      "line_id": "Line-6B",
+      "operator_id": "OP-501"
+    },
+    "timestamps": {
+      "start": "2025-12-19T05:30:00Z",
+      "end": "2025-12-19T13:30:00Z"
+    }
+  },
+  "production_run": {
+    "sku": "IoT-Gateway-IG10",
+    "batch_statistics": {
+      "total_products": 3600,
+      "target_yield": 3500,
+      "machine_uptime_percent": 94.1,
+      "energy_consumption_kwh": 620.4
+    },
+    "environmental_logs": [
+      { "hour": 0, "temp_c": 20.9, "humidity": 43 },
+      { "hour": 2, "temp_c": 21.2, "humidity": 44 },
+      { "hour": 4, "temp_c": 21.5, "humidity": 45 },
+      { "hour": 6, "temp_c": 21.7, "humidity": 46 }
+    ]
+  },
+  "quality_assurance": {
+    "automated_scans": {
+      "optical_pass": 3477,
+      "optical_fail": 123,
+      "logic_gates_check": "Minor Issues"
+    },
+    "human_audit_layer": {
+      "sampling_method": "ISO 2859-1 AQL 1.5",
+      "audit_notes": {
+        "major_defects_comments": "7 units failed due to firmware boot loop during logic gate checks.",
+        "minor_defects_comments": "9 units showed bent mounting tabs.",
+        "supervisor_signoff": "R. Patel"
+      }
+    }
+  },
+  "logistics": {
+    "packaging_type": "ESD-Safe Tray",
+    "destination_hub": "NA-Hub-Midwest-02",
+    "shipping_priority": 4
+  }
+}
+

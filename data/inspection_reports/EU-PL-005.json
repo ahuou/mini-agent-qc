@@ -1,0 +1,51 @@
+{
+  "header": {
+    "report_version": "1.2.4",
+    "uuid": "1aa7caa2-0f77-49f9-9e6a-0f4d5c0f2c87",
+    "facility_data": {
+      "site_code": "EU-PL-005",
+      "line_id": "Line-1C",
+      "operator_id": "OP-214"
+    },
+    "timestamps": {
+      "start": "2025-12-18T22:00:00Z",
+      "end": "2025-12-19T06:00:00Z"
+    }
+  },
+  "production_run": {
+    "sku": "MicroController-MC88",
+    "batch_statistics": {
+      "total_products": 10000,
+      "target_yield": 9950,
+      "machine_uptime_percent": 99.3,
+      "energy_consumption_kwh": 1600.8
+    },
+    "environmental_logs": [
+      { "hour": 0, "temp_c": 21.0, "humidity": 45 },
+      { "hour": 2, "temp_c": 21.3, "humidity": 46 },
+      { "hour": 4, "temp_c": 21.5, "humidity": 47 },
+      { "hour": 6, "temp_c": 21.6, "humidity": 46 }
+    ]
+  },
+  "quality_assurance": {
+    "automated_scans": {
+      "optical_pass": 9941,
+      "optical_fail": 59,
+      "logic_gates_check": "Pass w/ warnings"
+    },
+    "human_audit_layer": {
+      "sampling_method": "ISO 2859-1 AQL 0.65",
+      "audit_notes": {
+        "major_defects_comments": "Our manual breakdown confirmed that 3 units had internal short circuits due to solder bridging.",
+        "minor_defects_comments": "A hundred units had minor cosmetic blemishes.",
+        "supervisor_signoff": "E. Kowalski"
+      }
+    }
+  },
+  "logistics": {
+    "packaging_type": "Vacuum Sealed",
+    "destination_hub": "Hub-EU-Central-12",
+    "shipping_priority": 2
+  }
+}
+

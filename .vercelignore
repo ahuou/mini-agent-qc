@@ -1,0 +1,13 @@
+# Keep the deployed Function small + never upload secrets.
+.env
+.git
+__pycache__/
+*.pyc
+.pytest_cache/
+.cache/
+venv/
+briefs/
+tests/
+report/
+reports/
+*.zip
