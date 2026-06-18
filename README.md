@@ -8,6 +8,11 @@ classifies, and decides**, in language a non-technical operations reader can act
 
 **▶ Live demo:** **https://mini-agent-qc.vercel.app** — open it and the offline analysis runs on load (free, no setup). Or run it locally (below).
 
+> **Want to see the real LLM, no key needed?** The demo's **Live** mode runs on my own
+> Anthropic key, capped at ~$5 of credit — a few free trials on me, which is plenty of
+> runway for extended testing. If that budget ever runs dry, just paste your own key in
+> the Live field (it's used per-request and never stored).
+
 ### What this demonstrates (mapped to the brief)
 
 | What you're looking for | Where to see it |
