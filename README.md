@@ -1,15 +1,17 @@
 # Quality-Control Pipeline (mini-agent)
 
+![Sentinel QC console: breach banner and tool-reliability readouts](webapp/hero.png)
+
 An automated pipeline that reads manufacturing **inspection-report JSONs**, uses an
 **LLM to extract major/minor defect counts from free-text audit notes**, applies the
 defect-threshold rules, raises a (stubbed) **e-mail alert** when a facility breaches a
-limit, and — the part that matters most — **measures how well the tool itself reads,
+limit, and (the part that matters most) **measures how well the tool itself reads,
 classifies, and decides**, in language a non-technical operations reader can act on.
 
-**▶ Live demo:** **https://mini-agent-qc.vercel.app** — open it and the offline analysis runs on load (free, no setup). Or run it locally (below).
+**▶ Live demo:** **https://mini-agent-qc.vercel.app**: open it and the offline analysis runs on load (free, no setup). Or run it locally (below).
 
 > **Want to see the real LLM, no key needed?** The demo's **Live** mode runs on my own
-> Anthropic key, capped at ~$5 of credit — a few free trials on me, which is plenty of
+> Anthropic key, capped at ~$5 of credit, a few free trials on me, which is plenty of
 > runway for extended testing. If that budget ever runs dry, just paste your own key in
 > the Live field (it's used per-request and never stored).
 
@@ -49,7 +51,7 @@ python -m webapp            # then open http://127.0.0.1:8000
 
 It runs the pipeline live (mock or live mode), and shows the alert state, the
 tool-quality metrics as instrument readouts, the alert dispatch (with the audit-note
-evidence behind each breach), the per-report ledger, and an interactive **bench test** —
+evidence behind each breach), the per-report ledger, and an interactive **bench test**:
 type any audit note and watch the agent read the count, score its confidence, and decide.
 
 ![QC console](webapp/preview.png)
@@ -62,7 +64,7 @@ python -m qc_pipeline --mode live --tier balanced   # cheap=Haiku · balanced=So
 ```
 
 `--mode live` is the only path that needs a key; everything else runs fully offline. The
-live extractor is a drop-in `Extractor` — see "Design" below.
+live extractor is a drop-in `Extractor`; see "Design" below.
 
 ## What it does, step by step
 
@@ -76,7 +78,7 @@ live extractor is a drop-in `Extractor` — see "Design" below.
 4. **Decide** via the threshold rules (`qc_pipeline/rules.py`): alert if major > 1%,
    minor > 3%, or overall > 3.5% of production.
 5. **Alert** the stakeholders with a plain-language e-mail (`qc_pipeline/alerting.py`,
-   stubbed — prints/logs instead of sending).
+   stubbed; prints/logs instead of sending).
 6. **Measure the tool** (`qc_pipeline/metrics/`): reading accuracy vs a hand-labelled
    golden set, the value the LLM adds over the naive baseline, alert precision/recall,
    confidence, human-review rate, latency, cost, and coverage → `reports/results.json`.
@@ -84,14 +86,14 @@ live extractor is a drop-in `Extractor` — see "Design" below.
 ## Design
 
 - **Pluggable extractors** behind one interface (`extraction/base.py`):
-  `MockExtractor` (deterministic, offline — backs every test and the default run),
+  `MockExtractor` (deterministic, offline; backs every test and the default run),
   `LLMExtractor` (Anthropic structured output via `messages.parse`), and a deliberately
   naive `NaiveBaselineExtractor` used only as a cross-check.
-- The offline mock is **not** a lookup table of the sample answers — it runs the same
+- The offline mock is **not** a lookup table of the sample answers; it runs the same
   robust natural-language parser (`extraction/number_words.py`) the LLM is prompted to
   emulate, so it generalises to unseen wording.
 - The metrics evaluate the **agent**, never the manufacturing defect rates.
-- **Extraction cache** — live reads are hashed by (model + audit-note content) and
+- **Extraction cache**: live reads are hashed by (model + audit-note content) and
   persisted to `~/.cache/qc_pipeline/`, so re-running the same reports with the same
   model costs **zero tokens** (editing a note changes the hash → it re-extracts).
   Inspect via `GET /api/cache`; clear from the dashboard.
@@ -107,3 +109,12 @@ tests/                number-word traps · rule boundaries · loader · metrics 
 data/inspection_reports/   the provided sample (12 reports)
 report/main.pdf       the full write-up
 ```
+
+## Provenance
+
+- **Original work (June 2026):** built solo by Alex Huou as a take-home brief
+  (`briefs/original_task_readme.md`): pipeline, dashboard, 86 tests, report and the
+  Vercel deploy.
+- **2026-10 polish (AI-assisted, Claude Code):** hero screenshot at the top of this
+  README (cropped from `webapp/preview.png`), repo homepage and topics, punctuation
+  cleanup. No pipeline code changed.
